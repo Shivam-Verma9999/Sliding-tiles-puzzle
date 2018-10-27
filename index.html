@@ -7,6 +7,8 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto">
     <link rel="stylesheet" href="./index.css">
+    <script src="./Grid.js"></script>
+    <script src="./priority.js"></script>
     <title>Sliding Tiles Puzzle</title>
 </head>
 
@@ -33,13 +35,13 @@
             <div class="puzzlePiece">6</div>
             <div class="puzzlePiece">7</div>
             <div class="puzzlePiece">8</div>
-            <div class="puzzlePiece" style="display: none;"></div>
+            <div class="puzzlePiece" style="visibility:hidden;"></div>
             <div class="differ"></div>
         </div>
         <div class="controls">
 
             <button id="toggle" onclick="showNumbers()">Hide numbers</button>
-            <button onclick="solve()">Solve</button>
+            <button id ="solve" onclick="solve(this)">Solve</button>
         </div>
 
         <div class="info">
@@ -65,30 +67,42 @@
 
 </body>
 <script>
-    // listener for keyboard events
-    window.addEventListener('keypress', (event) => {
-        console.log(event.key);
-        if (event.key === 't' || event.key === 'T') {
-            showNumbers();
-        } else {
-            move(event.key);
-        }
-
-    });
-
     // presents the present positions of puzzle pieces
     // example :- piecesPositions[0] represent the position of 1st tile in container which is 1
     // piecesPositions[1] represents the position of 2nd tile in container which is 2
     //     
     // rearrange values in this array to change the initial positions of tiles
-    let piecesPositions = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+    let grid = new Grid();
+
+    let solutionVisualization;
+    grid.scramble();
+    let piecesPositions = grid.getPositions(); //[1, 2, 3, 4, 5, 6, 7, 8, 9];
 
     // this piece is transparent
     // ignore this
-    let blankPieceNum = 9 - 1;
+    let blankPieceNum = 8;
 
     // reference to span that displays total moves
     let totalMoves = document.querySelector('#totalMoves');
+    // listener for keyboard events
+    window.addEventListener('keypress', (event) => {
+        // console.log(event.key);
+        if (event.key === 't' || event.key === 'T') {
+            showNumbers();
+        } else {
+            if (grid.move(event.key)) {
+                increaseTotalMoves();
+                piecesPositions = grid.getPositions();
+                setPositions();
+                if (grid.checkWin()) {
+                    alert("Winner Winner Chicken ....... (You know next word)\ntotalmoves:- " + totalMoves.innerHTML +
+                        "\nStarting new game");
+                    newGame();
+                }
+            };
+        }
+    });
+
 
     // this sets the positions of the tiles in the Game as given in the piecesPositions array
     function setPositions() {
@@ -122,79 +136,100 @@
         element.innerHTML = (numbersVisible == 1) ? "Hide numbers" : "Show numbers";
     }
 
-    // move the tile pieces according to the button pressed on keyboard
-    // ========ACTUATERS==========
-    function move(key) {
-        let tileMoved = false;
-        switch (key) {
-            case 'd':
-            case 'D':
-            case 'ArrowRight':
-                if (((piecesPositions[blankPieceNum] - 1) % 3) > 0) {
-                    piecesPositions[blankPieceNum]--;
 
-                    let movedToPos = piecesPositions[blankPieceNum];
-                    piecesPositions[piecesPositions.indexOf(movedToPos)] += 1;
-                    tileMoved = true;
-                };
-                break;
-
-            case 'a':
-            case 'A':
-            case 'ArrowLeft':
-                if (((piecesPositions[blankPieceNum] - 1) % 3) < 2) {
-                    piecesPositions[blankPieceNum] += 1;
-                    let movedToPos = piecesPositions[blankPieceNum];
-                    piecesPositions[piecesPositions.indexOf(movedToPos)] -= 1;
-                    tileMoved = true;
-                };
-                break;
-
-            case 'W':
-            case 'w':
-            case 'ArrowUp':
-                if (Math.floor((piecesPositions[blankPieceNum] - 1) / 3) < 2) {
-                    piecesPositions[blankPieceNum] += 3;
-                    let movedToPos = piecesPositions[blankPieceNum];
-                    piecesPositions[piecesPositions.indexOf(movedToPos)] -= 3;
-                    tileMoved = true;
-                };
-                break;
-
-            case 's':
-            case 'S':
-            case 'ArrowDown':
-                if (Math.floor((piecesPositions[blankPieceNum] - 1) / 3) > 0) {
-                    piecesPositions[blankPieceNum] -= 3;
-                    let movedToPos = piecesPositions[blankPieceNum];
-                    piecesPositions[piecesPositions.indexOf(movedToPos)] += 3;
-                    tileMoved = true;
-                };
-                break;
-
-            default:
-                break;
-        }
-        if (tileMoved) {
-            setPositions();
-            increaseTotalMoves();
-            if (checkWin()) {
-                alert("Winner Winner Chicken ....... (You know next word)\ntotalmoves:- " + totalMoves.innerHTML +
-                    "\nStarting new game");
-                newGame();
-            }
-        }
-    }
 
     // jo karna ko karlo
-    function solve() {
-        alert("sabkuch thode he kar dunga.");
+    function solve(button) {
+        enableSolvebtn(false);
+        if(grid.checkWin()){
+            return ;
+        }
+        let grid1 = new Grid(grid, undefined);
+        let goalGrid;
+
+        let set = [];
+
+        const prior = (new PriorityQueue());
+        prior.put(grid1);
+
+        set[grid1.getIndex()] = 1;
+
+        let solutionFound = false;
+
+        while (!solutionFound) {
+
+            grid1 = (prior.pop());
+
+            if (!grid1) {
+                break;
+            }
+
+            let possibleMoves = grid1.getAvailableMoves();
+
+            for (let i = 0; i < possibleMoves.length; i++) {
+
+                let g = new Grid(grid1, possibleMoves[i]);
+
+                if (set[g.getIndex()] != 1) {
+                    set[g.getIndex()] = 1;
+                    prior.put(g);
+                    if (g.checkWin()) {
+                        solutionFound = true;
+                        goalGrid = g;
+                    }
+                }
+
+            }
+        }
+        console.log('Solution found');
+
+        let correctMoves = [];
+        let index = 0;
+        let parentGrid;
+
+        while (true) {
+            let move = goalGrid.createWithMove;
+            if (move) {
+                correctMoves[index] = move;
+                goalGrid = goalGrid.parent;
+                if (goalGrid) parentGrid = goalGrid;
+                index++;
+            } else {
+                break;
+            }
+        }
+
+        correctMoves.reverse();
+        console.log("Move sequence ", correctMoves);
+        index = 0;
+        solutionVisualization = setInterval(() => {
+            if (!correctMoves[index]) {
+                clearInterval(solutionVisualization);
+                console.log('clearing....', index);
+            } else {
+                grid.move(correctMoves[index])
+                increaseTotalMoves();
+                piecesPositions = grid.getPositions();
+                index++;
+                setPositions();
+                if (grid.checkWin()) {
+                    // if (confirm("Winner Winner Chicken ....... (You know next word)\ntotalmoves:- " +
+                    //         totalMoves.innerHTML +
+                    //         "\nStarting new game")) {
+                    //     newGame();
+                    // };
+                    enableSolvebtn(true);
+                }
+
+
+            }
+        }, 400);
+
+
     }
 
-    // bigad do
-    function scramble() {
-        piecesPositions.reverse();
-        setPositions();
+    function enableSolvebtn(bool){
+        document.querySelector('#solve').disabled = !bool;
     }
 
     function changeImage(imgElement) {
@@ -220,8 +255,14 @@
     // rearrange tile positions 
     // Reset totalMoves to Zero
     function newGame() {
-        piecesPositions = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-        scramble();
+        if (solutionVisualization) {
+            clearInterval(solutionVisualization);
+            solutionVisualization = undefined;
+        }
+
+        enableSolvebtn(true);
+        grid.scramble();
+        piecesPositions = grid.getPositions();
         setPositions();
         increaseTotalMoves(resetGame = true);
     }
@@ -240,5 +281,6 @@
         return wonStatus;
     }
 </script>
+
 
 </html>
