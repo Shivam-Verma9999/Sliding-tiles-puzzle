@@ -84,9 +84,21 @@
 
     // reference to span that displays total moves
     let totalMoves = document.querySelector('#totalMoves');
+
+    // shows win message  and prompts to start a new game
+    let showWin = ()=>{
+        let startNewGame = confirm(`Winner Winner Chicken ....... (You know next word)\ntotalmoves:- ${totalMoves.innerHTML} \nStarting new game"`)
+        if(startNewGame) newGame();
+    }
     // listener for keyboard events
-    window.addEventListener('keypress', (event) => {
+    document.onkeydown = (event) => {
         // console.log(event.key);
+        
+        // stop any  ongoing visualization when player interacts 
+        clearInterval(solutionVisualization);
+        // enable solve btn 
+        enableSolvebtn(true);
+
         if (event.key === 't' || event.key === 'T') {
             showNumbers();
         } else {
@@ -94,14 +106,13 @@
                 increaseTotalMoves();
                 piecesPositions = grid.getPositions();
                 setPositions();
+
                 if (grid.checkWin()) {
-                    alert("Winner Winner Chicken ....... (You know next word)\ntotalmoves:- " + totalMoves.innerHTML +
-                        "\nStarting new game");
-                    newGame();
+                    showWin();
                 }
             };
         }
-    });
+    };
 
 
     // this sets the positions of the tiles in the Game as given in the piecesPositions array
@@ -212,18 +223,14 @@
                 piecesPositions = grid.getPositions();
                 index++;
                 setPositions();
-                if (grid.checkWin()) {
-                    // if (confirm("Winner Winner Chicken ....... (You know next word)\ntotalmoves:- " +
-                    //         totalMoves.innerHTML +
-                    //         "\nStarting new game")) {
-                    //     newGame();
-                    // };
-                    enableSolvebtn(true);
-                }
+                
+                // if (grid.checkWin()) {
+                //     showWin();
+                // }
 
-
+                enableSolvebtn(true);
             }
-        }, 400);
+        }, 200);
 
 
     }
@@ -235,11 +242,15 @@
     function changeImage(imgElement) {
         let src = imgElement.attributes.src.value;
         console.log(src);
+        let newImageSrc =  `url( ${src} )`;
         let puzzleContainer = document.querySelector('.puzzleContainer');
-        puzzleContainer.style.backgroundImage = 'url(' + src + ')';
 
+        // setting background image in puzzle container
+        puzzleContainer.style.backgroundImage =  newImageSrc;
+
+        // setting background image in  all puzzle pieces
         document.querySelectorAll('.puzzlePiece').forEach((img) => {
-            img.style.backgroundImage = 'url(' + src + ')';
+            img.style.backgroundImage = newImageSrc;
         });
 
     }
@@ -247,8 +258,12 @@
     //increase total Moves count
     function increaseTotalMoves(resetGame = undefined) {
 
-        totalMoves.innerHTML = (parseInt(totalMoves.innerHTML)) + 1;
-        if (resetGame != undefined) totalMoves.innerHTML = 0;
+        if (resetGame != undefined) 
+            //resetting game 
+            totalMoves.innerHTML = 0;
+        else
+            // increasing moves by one
+            totalMoves.innerHTML = (parseInt(totalMoves.innerHTML)) + 1;
     }
 
     // Reset game

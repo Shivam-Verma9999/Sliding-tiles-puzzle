@@ -8,11 +8,8 @@ class Grid {
         if(!parent){
             this.piecesPositions = [1,2,3,4,5,6,7,8,9];
         }else{
-            let values = parent.piecesPositions;
-            for(let i = 0 ; i < 9; i++){
-                this.piecesPositions[i] = values[i];
-            }
-        }
+            this.piecesPositions = [...parent.piecesPositions];
+        }   
         this.blankPiecePos = (!parent) ? 8 : parent.blankPiecePos;
         this.parent = parent;
         this.createWithMove = createWithMove;
@@ -133,18 +130,20 @@ class Grid {
         
         for(let i = 0; i < 9; i++){
             
+            // calculating for coloumn
             let shoudlBe = i%3;
             let is = (this.piecesPositions[i] - 1)%3;
             let diff = shoudlBe - is;
             
-            dist = dist + (( diff < 0 ) ? -diff : diff);
+            dist += Math.abs(diff);
             
+            //calculating for row
             shoudlBe = Math.floor(i/3);
             let x  = (this.piecesPositions[i] - 1)/3;
             is = Math.floor(x);
             diff = shoudlBe - is;
 
-            dist = dist + (( diff < 0 ) ? -diff : diff);
+            dist += Math.abs(diff);
         }
         this.mDist = dist;
     }

@@ -37,7 +37,7 @@ header{
     color: white;
     position: absolute;
     border-radius: 8px;
-    border: solid black 1px;
+    border: solid rgb(87, 85, 85) 1px;
     background: url(./images/img1.jpg) no-repeat;
     background-size: calc( 135*3px );
     z-index: 1;
