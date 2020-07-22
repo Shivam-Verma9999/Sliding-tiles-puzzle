@@ -108,7 +108,7 @@
                 setPositions();
 
                 if (grid.checkWin()) {
-                    showWin();
+                    setTimeout(()=>{showWin();}, 1000);
                 }
             };
         }
